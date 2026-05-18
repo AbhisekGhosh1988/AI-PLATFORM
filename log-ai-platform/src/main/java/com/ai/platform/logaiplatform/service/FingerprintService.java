@@ -11,20 +11,11 @@ import java.util.regex.Pattern;
 @Service
 public class FingerprintService {
 
-    private final Set<String> processed = ConcurrentHashMap.newKeySet();
     private static final Pattern EXCEPTION_PATTERN =
             Pattern.compile("([a-zA-Z0-9_$.]+(?:Exception|Error))");
     public String generate(LogDocument log) {
         String message = normalize(log.getMessage());
         return log.getService() + ":" + extractException(log) + ":" + message;
-    }
-
-    public boolean alreadyProcessed(String fingerprint) {
-        return processed.contains(fingerprint);
-    }
-
-    public void markProcessed(String fingerprint) {
-        processed.add(fingerprint);
     }
 
     private String normalize(String input) {

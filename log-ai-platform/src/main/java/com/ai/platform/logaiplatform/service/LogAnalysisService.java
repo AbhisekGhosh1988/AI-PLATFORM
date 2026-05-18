@@ -19,10 +19,6 @@ public class LogAnalysisService {
     private  OpenRouterService openRouterService;
     @Autowired
     private  LogService logService;
-    @Value("${alert.threshold}")
-    private long threshold;
-    @Value("${alert.cooldown-seconds}")
-    private long cooldownSeconds;
     @Autowired
     private  FingerprintService fingerprintService;
     @Autowired
@@ -31,97 +27,36 @@ public class LogAnalysisService {
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     @Scheduled(fixedDelay = 60000, initialDelay = 30000)
-    @Scheduled(
-            fixedDelay = 60000,
-            initialDelay = 30000
-    )
     public void monitorErrors() {
-
-        if (!running.compareAndSet(
-                false,
-                true
-        )) {
-
-            log.warn(
-                    "Analysis already running"
-            );
-
+        if (!running.compareAndSet(false, true)) {
+            log.warn("Analysis already running");
             return;
         }
-
         try {
-
-            List<LogDocument> logs =
-                    logService
-                            .fetchUnprocessedLogs();
-
-            Map<String, List<LogDocument>>
-                    grouped =
-                    new HashMap<>();
-
-            Map<String, List<String>>
-                    fingerprints =
-                    new HashMap<>();
+            List<LogDocument> logs = logService.fetchUnprocessedLogs();
+            Map<String, List<LogDocument>> grouped = new HashMap<>();
+            Map<String, List<String>> fingerprints = new HashMap<>();
 
             for (LogDocument log : logs) {
-
-                String fingerprint =
-                        fingerprintService
-                                .generate(log);
-
-                grouped.computeIfAbsent(
-                        log.getService(),
-                        k -> new ArrayList<>()
-                ).add(log);
-
-                fingerprints.computeIfAbsent(
-                        log.getService(),
-                        k -> new ArrayList<>()
-                ).add(fingerprint);
+                String fingerprint = fingerprintService.generate(log);
+                grouped.computeIfAbsent(log.getService(), k -> new ArrayList<>()).add(log);
+                fingerprints.computeIfAbsent(log.getService(), k -> new ArrayList<>()).
+                        add(fingerprint);
             }
-
-            grouped.forEach((service,
-                             serviceLogs) -> {
-
-                ServiceAnomalyBatchEvent
-                        event =
-                        ServiceAnomalyBatchEvent
-                                .builder()
-                                .eventId(
-                                        UUID.randomUUID()
-                                                .toString()
-                                )
-                                .serviceName(service)
-                                .createdAt(
-                                        Instant.now()
-                                )
-                                .fingerprints(
-                                        fingerprints
-                                                .get(service)
-                                )
-                                .logs(serviceLogs)
-                                .build();
-
+            grouped.forEach((service, serviceLogs) -> {
+                ServiceAnomalyBatchEvent event = ServiceAnomalyBatchEvent.builder().
+                        eventId(UUID.randomUUID().toString()).serviceName(service).
+                        createdAt(Instant.now()).fingerprints(fingerprints.get(service)).
+                        logs(serviceLogs).build();
                 producer.publish(event);
 
-                for (LogDocument log :
-                        serviceLogs) {
-
-                    logService.markProcessed(
-                            log.getId()
-                    );
-                }
-            });
+                for (LogDocument log : serviceLogs) {
+                    logService.markProcessed(log.getId());}});
 
         } catch (Exception ex) {
-
-            log.error(
-                    "Analysis failed",
-                    ex
-            );
+            log.error("Analysis failed", ex);
 
         } finally {
-
             running.set(false);
         }
     }
@@ -154,13 +89,11 @@ public class LogAnalysisService {
 
             Logs:
             """ + builder;
-
         return openRouterService.askOpenRouter(prompt);
     }
     public String analyzeClusters() throws IOException {
         Map<String, Long> clusters = logService.clusterRecentErrors();
         StringBuilder builder = new StringBuilder();
-
         for (Map.Entry<String, Long> entry : clusters.entrySet()) {
             builder.append("Exception: ").append(entry.getKey()).append("\n");
             builder.append("Count: ").append(entry.getValue()).append("\n\n");
@@ -180,7 +113,6 @@ public class LogAnalysisService {
 
             Clusters:
             """ + builder;
-
         return openRouterService.askOpenRouter(prompt);
     }
     public String analyze() throws IOException {
@@ -212,7 +144,6 @@ public class LogAnalysisService {
 
                 Logs:
                 """ + builder;
-
         return openRouterService.askOpenRouter(prompt);
     }
 }

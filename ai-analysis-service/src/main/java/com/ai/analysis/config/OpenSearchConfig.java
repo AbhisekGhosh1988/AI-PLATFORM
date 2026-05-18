@@ -24,20 +24,11 @@ public class OpenSearchConfig {
     public OpenSearchClient openSearchClient() {
 
         ObjectMapper objectMapper = new ObjectMapper();
-
-        objectMapper.registerModule(
-                new JavaTimeModule()
-        );
-
+        objectMapper.registerModule(new JavaTimeModule());
         RestClient restClient = RestClient.builder(
-                new HttpHost("localhost", 9200)
-        ).build();
-
-        OpenSearchTransport transport =
-                new RestClientTransport(
-                        restClient,
-                        new JacksonJsonpMapper(objectMapper)
-                );
+                new HttpHost("localhost", 9200)).build();
+        OpenSearchTransport transport = new RestClientTransport
+                (restClient, new JacksonJsonpMapper(objectMapper));
 
         return new OpenSearchClient(transport);
     }

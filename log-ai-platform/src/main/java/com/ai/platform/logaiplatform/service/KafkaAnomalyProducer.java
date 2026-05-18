@@ -10,27 +10,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class KafkaAnomalyProducer {
-
-    private static final String TOPIC =
-            "anomaly-batch-events";
-
-    private final KafkaTemplate<
-            String,
-            ServiceAnomalyBatchEvent> kafkaTemplate;
-
-    public void publish(
-            ServiceAnomalyBatchEvent event
-    ) {
-
-        kafkaTemplate.send(
-                TOPIC,
-                event.getServiceName(),
-                event
-        );
-
-        log.info(
-                "Published anomaly batch: {}",
-                event.getServiceName()
-        );
+    private static final String TOPIC = "anomaly-batch-events";
+    private final KafkaTemplate<String, ServiceAnomalyBatchEvent> kafkaTemplate;
+    public void publish(ServiceAnomalyBatchEvent event) {
+        kafkaTemplate.send(TOPIC, event.getServiceName(), event);
+        log.info("Published anomaly batch: {}", event.getServiceName());
     }
 }

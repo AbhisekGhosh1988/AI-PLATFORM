@@ -22,44 +22,18 @@ public class KafkaConsumerConfig {
     public ConsumerFactory<String, ServiceAnomalyBatchEvent>
     consumerFactory() {
 
-        JsonDeserializer<ServiceAnomalyBatchEvent>
-                deserializer =
-                new JsonDeserializer<>(
-                        ServiceAnomalyBatchEvent.class
-                );
-
+        JsonDeserializer<ServiceAnomalyBatchEvent> deserializer =
+                new JsonDeserializer<>(ServiceAnomalyBatchEvent.class);
         deserializer.addTrustedPackages("*");
-
         deserializer.setUseTypeHeaders(false);
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "ai-analysis-group");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
-        Map<String, Object> config =
-                new HashMap<>();
-
-        config.put(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                "localhost:9092"
-        );
-
-        config.put(
-                ConsumerConfig.GROUP_ID_CONFIG,
-                "ai-analysis-group"
-        );
-
-        config.put(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                StringDeserializer.class
-        );
-
-        config.put(
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                JsonDeserializer.class
-        );
-
-        return new DefaultKafkaConsumerFactory<>(
-                config,
-                new StringDeserializer(),
-                deserializer
-        );
+        return new DefaultKafkaConsumerFactory<>
+                (config, new StringDeserializer(), deserializer);
     }
 
     @Bean
