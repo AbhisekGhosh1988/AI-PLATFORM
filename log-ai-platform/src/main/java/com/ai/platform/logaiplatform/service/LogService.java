@@ -1,5 +1,6 @@
 package com.ai.platform.logaiplatform.service;
 
+import com.ai.platform.logaiplatform.dto.LogEvent;
 import com.ai.platform.logaiplatform.entity.LogDocument;
 import lombok.RequiredArgsConstructor;
 
@@ -11,13 +12,11 @@ import org.opensearch.client.opensearch._types.aggregations.StringTermsAggregate
 import org.opensearch.client.opensearch._types.aggregations.StringTermsBucket;
 import org.opensearch.client.opensearch.core.IndexResponse;
 import org.opensearch.client.opensearch.core.SearchResponse;
+import org.opensearch.client.opensearch.core.search.Hit;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -212,5 +211,114 @@ public class LogService {
         }
 
         return result;
+    }
+    public List<LogDocument> fetchLogs() {
+
+        List<LogDocument> result =
+                new ArrayList<>();
+
+        try {
+
+            SearchResponse<LogDocument>
+                    response =
+                    client.search(
+                            s -> s
+                                    .index("logs")
+                                    .size(500),
+                            LogDocument.class
+                    );
+
+            for (Hit<LogDocument> hit :
+                    response.hits().hits()) {
+
+                if (hit.source() != null) {
+
+                    result.add(hit.source());
+                }
+            }
+
+        } catch (IOException ex) {
+
+            log.error(
+                    "Failed to fetch logs",
+                    ex
+            );
+        }
+
+        return result;
+    }
+    public List<LogDocument>
+    fetchUnprocessedLogs() {
+
+        List<LogDocument> result =
+                new ArrayList<>();
+
+        try {
+
+            SearchResponse<LogDocument>
+                    response =
+                    client.search(
+                            s -> s
+                                    .index("logs")
+                                    .query(q -> q
+                                            .term(t -> t
+                                                    .field("processed")
+                                                    .value(v-> v.booleanValue(false))
+                                            )
+                                    )
+                                    .size(500),
+                            LogDocument.class
+                    );
+
+            for (Hit<LogDocument> hit :
+                    response.hits().hits()) {
+
+                LogDocument log = hit.source();
+
+                if (log != null) {
+
+                    log.setId(hit.id());
+
+                    result.add(log);
+                }
+            }
+
+        } catch (Exception ex) {
+
+            log.error(
+                    "Failed to fetch logs",
+                    ex
+            );
+        }
+
+        return result;
+    }
+
+    public void markProcessed(
+            String documentId
+    ) {
+
+        try {
+
+            Map<String, Object> doc =
+                    new HashMap<>();
+
+            doc.put("processed", true);
+
+            client.update(
+                    u -> u
+                            .index("logs")
+                            .id(documentId)
+                            .doc(doc),
+                    Map.class
+            );
+
+        } catch (Exception ex) {
+
+            log.error(
+                    "Failed to mark processed",
+                    ex
+            );
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.ai.platform.logaiplatform.config;
+package com.ai.analysis.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,9 +16,5 @@ public class WebClientConfig {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
-    }
-    @Bean
-    public WebClient anomalyWebClient(WebClient.Builder builder) {
-        return builder.baseUrl("http://localhost:8081").build();
     }
 }

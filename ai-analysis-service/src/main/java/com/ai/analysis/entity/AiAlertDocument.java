@@ -1,7 +1,6 @@
-package com.ai.platform.logaiplatform.entity;
+package com.ai.analysis.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.InstantSerializer;
 import lombok.Data;
@@ -9,7 +8,6 @@ import lombok.Data;
 import java.time.Instant;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class AiAlertDocument {
 
     private String severity;
@@ -20,4 +18,8 @@ public class AiAlertDocument {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     @JsonSerialize(using = InstantSerializer.class)
     private Instant createdAt;
+    private String exception;
+    private String recommendation;
+    private Double confidence;
+    private String fingerprint;
 }

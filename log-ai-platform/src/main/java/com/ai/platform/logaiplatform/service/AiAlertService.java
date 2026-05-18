@@ -1,5 +1,7 @@
 package com.ai.platform.logaiplatform.service;
 
+import com.ai.platform.logaiplatform.client.AnomalyClient;
+import com.ai.platform.logaiplatform.dto.AnomalyResponseDTO;
 import com.ai.platform.logaiplatform.dto.HeatmapResponse;
 import com.ai.platform.logaiplatform.entity.AiAlertDocument;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +16,14 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class AiAlertService {
 
     private final OpenSearchClient client;
-
+    private final AnomalyClient anomalyClient;
     public void save(AiAlertDocument alert) throws IOException {
 
         // ✅ Ensure severity is set to a valid value (not null or empty)
@@ -75,40 +78,81 @@ public class AiAlertService {
                 .map(hit -> hit.source())
                 .toList();
     }
-    public List<HeatmapResponse> getDetailedHeatmap(String duration) throws
-            IOException {
+    private static final Pattern VALID_DURATION =
+            Pattern.compile("^\\d+[smhd]$");
+
+    public List<HeatmapResponse> getDetailedHeatmap(String duration)
+            throws IOException {
+
+        if (!VALID_DURATION.matcher(duration).matches()) {
+            throw new IllegalArgumentException(
+                    "Invalid duration format. Examples: 5m, 1h, 7d"
+            );
+        }
+
         SearchResponse<AiAlertDocument> response =
-                client.search(s -> s.index("ai-alerts").size(1000).
-                query(q -> q.range(r -> r.field("createdAt").
-                gte(JsonData.of("now-" + duration)))), AiAlertDocument.class);
+                client.search(s -> s
+                                .index("ai-alerts")
+                                .size(1000)
+                                .query(q -> q
+                                        .range(r -> r
+                                                .field("createdAt")
+                                                .gte(JsonData.of("now-" + duration))
+                                                .lte(JsonData.of("now"))
+                                        )
+                                ),
+                        AiAlertDocument.class);
 
         Map<String, HeatmapResponse> map = new HashMap<>();
+
+        List<AnomalyResponseDTO> alerts = anomalyClient.getAlerts();
+
         for (Hit<AiAlertDocument> hit : response.hits().hits()) {
+
             AiAlertDocument alert = hit.source();
+
             if (alert == null) {
                 continue;
             }
+
             String service = alert.getService();
 
             HeatmapResponse dto = map.computeIfAbsent(service, s -> {
-                                HeatmapResponse h = new HeatmapResponse();
-                                h.setService(service);
-                                h.setSeverities(new HashMap<>());
-                                h.setTraceIds(new ArrayList<>());
-                                return h;
-                            });
+                HeatmapResponse h = new HeatmapResponse();
+                h.setService(service);
+                h.setSeverities(new HashMap<>());
+                h.setTraceIds(new ArrayList<>());
+                return h;
+            });
+
             dto.setTotalErrors(dto.getTotalErrors() + 1);
-            String severity = alert.getSeverity() == null ? "UNKNOWN" : alert.getSeverity();
+
+            String severity =
+                    alert.getSeverity() == null
+                            ? "UNKNOWN"
+                            : alert.getSeverity();
+
             dto.getSeverities().merge(severity, 1L, Long::sum);
+
             if (alert.getCreatedAt() != null) {
                 dto.setLatestTimestamp(alert.getCreatedAt().toString());
             }
+
             dto.setLatestImpact(alert.getImpact());
             dto.setLatestRootCause(alert.getRootCause());
             dto.setSuggestedFix(alert.getSuggestedFix());
-            dto.setTopException(extractTopException(alert.getRootCause()));
+
+            dto.setTopException(
+                    extractTopException(alert.getRootCause())
+            );
+
             dto.setTrend(calculateTrend(dto.getTotalErrors()));
-            dto.setHealth(calculateHealth(severity, dto.getTotalErrors()));
+
+            dto.setHealth(
+                    calculateHealth(severity, dto.getTotalErrors())
+            );
+
+            dto.setRecentAnomalies(alerts);
         }
 
         return new ArrayList<>(map.values());

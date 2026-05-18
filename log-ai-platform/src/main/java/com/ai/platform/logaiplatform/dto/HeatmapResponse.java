@@ -21,4 +21,5 @@ public class HeatmapResponse {
     private String trend;
     private double anomalyScore;
     private String health;
+    private List<AnomalyResponseDTO> recentAnomalies;
 }

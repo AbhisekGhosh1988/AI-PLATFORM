@@ -1,21 +1,16 @@
 package com.ai.platform.logaiplatform.service;
 
-import com.ai.platform.logaiplatform.entity.AiAlertDocument;
+import com.ai.platform.logaiplatform.dto.ServiceAnomalyBatchEvent;
 import com.ai.platform.logaiplatform.entity.LogDocument;
-import com.ai.platform.logaiplatform.util.AiResponseParser;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -23,186 +18,114 @@ public class LogAnalysisService {
     @Autowired
     private  OpenRouterService openRouterService;
     @Autowired
-    private ObjectProvider<LogAnalysisService> logAnalysisServiceSelf;  // ✅ Lazy injection - no circular dependency
-    @Autowired
     private  LogService logService;
-    @Autowired
-    private  AiAlertService aiAlertService;
-    private  Map<String, Instant> lastAlertTimePerService = new ConcurrentHashMap<>();
     @Value("${alert.threshold}")
     private long threshold;
     @Value("${alert.cooldown-seconds}")
     private long cooldownSeconds;
-    private final Set<String> processingServices =
-            ConcurrentHashMap.newKeySet();
+    @Autowired
+    private  FingerprintService fingerprintService;
+    @Autowired
+    private  KafkaAnomalyProducer producer;
 
-    public String analyzeService(String serviceName) throws IOException {
-        List<LogDocument> logs = logService.getRecentErrorsByService(serviceName);
-        StringBuilder builder = new StringBuilder();
-        for (LogDocument log : logs) {
-            builder.append("Service: ").append(log.getService()).append("\n");
-            builder.append("Message: ").append(log.getMessage()).append("\n");
-            builder.append("Stacktrace: ").append(log.getStacktrace()).append("\n\n");
-        }
-        log.info("Generating logs for service: {} | Log  {}", serviceName, logs);
-        String prompt = """
-                        You are a Log Analyst.
-                        
-                        Analyze ONLY the provided logs.
-                        
-                        STRICT RULES:
-                        
-                        - Return Impact
-                        - Return Root Cause
-                        - Return Suggested Fix but make sure you do not hallucinate
-                        - Do not invent exceptions not present in logs
-                        - Severity must be exactly:
-                          LOW, MEDIUM, HIGH, or CRITICAL
-                        - service name must be the same as the one provided  
-                        Return ONLY this JSON structure:
-                        { "severity": "LOW|MEDIUM|HIGH|CRITICAL", "impact": "...", "rootCause": "...", "suggestedFix": "...", "service": "..." }
-                                               
-                        LOGS:
-                        """ + builder;
-        return openRouterService.askOpenRouter(prompt);
-    }
+    private final AtomicBoolean running = new AtomicBoolean(false);
 
-    @Scheduled(fixedRateString = "${alert.scheduler-rate}")
+    @Scheduled(fixedDelay = 60000, initialDelay = 30000)
+    @Scheduled(
+            fixedDelay = 60000,
+            initialDelay = 30000
+    )
     public void monitorErrors() {
-        try {
-            log.info("Starting AI error monitoring...");
-            Map<String, Long> services = logService.countErrorsByServiceLastMinute();
-            if (services == null || services.isEmpty()) {
-                log.info("No services with errors found");
-                return;
-            }
-            services.forEach((serviceName, errorCount) ->
-                    log.info("Service: {} | Error Count: {}", serviceName, errorCount));
-            services.forEach((serviceName, errorCount) -> {
-                try {
-                    if (processingServices.contains(serviceName)) {
-                        log.warn("Service: {} already under AI analysis", serviceName);
-                        return;
-                    }
-                    if (errorCount < threshold) {
-                        log.info("Service: {} skipped. Threshold not reached", serviceName);
-                        return;
-                    }
-                    if (!isCooldownValid(serviceName)) {
-                        log.info("Service: {} skipped due to cooldown", serviceName);
-                        return;
-                    }
-                    processingServices.add(serviceName);
-                    logErrorSpike(serviceName, errorCount);
-                    logAnalysisServiceSelf.getObject().generateAlertAsync(serviceName, errorCount);
 
-                } catch (Exception ex) {
-                    processingServices.remove(serviceName);
-                    log.error("Failed triggering async analysis for service: {}", serviceName, ex);
+        if (!running.compareAndSet(
+                false,
+                true
+        )) {
+
+            log.warn(
+                    "Analysis already running"
+            );
+
+            return;
+        }
+
+        try {
+
+            List<LogDocument> logs =
+                    logService
+                            .fetchUnprocessedLogs();
+
+            Map<String, List<LogDocument>>
+                    grouped =
+                    new HashMap<>();
+
+            Map<String, List<String>>
+                    fingerprints =
+                    new HashMap<>();
+
+            for (LogDocument log : logs) {
+
+                String fingerprint =
+                        fingerprintService
+                                .generate(log);
+
+                grouped.computeIfAbsent(
+                        log.getService(),
+                        k -> new ArrayList<>()
+                ).add(log);
+
+                fingerprints.computeIfAbsent(
+                        log.getService(),
+                        k -> new ArrayList<>()
+                ).add(fingerprint);
+            }
+
+            grouped.forEach((service,
+                             serviceLogs) -> {
+
+                ServiceAnomalyBatchEvent
+                        event =
+                        ServiceAnomalyBatchEvent
+                                .builder()
+                                .eventId(
+                                        UUID.randomUUID()
+                                                .toString()
+                                )
+                                .serviceName(service)
+                                .createdAt(
+                                        Instant.now()
+                                )
+                                .fingerprints(
+                                        fingerprints
+                                                .get(service)
+                                )
+                                .logs(serviceLogs)
+                                .build();
+
+                producer.publish(event);
+
+                for (LogDocument log :
+                        serviceLogs) {
+
+                    logService.markProcessed(
+                            log.getId()
+                    );
                 }
             });
 
         } catch (Exception ex) {
-            log.error("AI service alert monitoring failed", ex);
-        }
-    }
 
-    /**
-     * Async AI Analysis
-     */
-    @Async("alertAnalyzerExecutor")
-    public void generateAlertAsync(String serviceName, long errorCount) {
-        log.info("[ASYNC-STARTED] Analyzing service: {}", serviceName);
-        try {
-            String analysis = analyzeService(serviceName);
-            log.info("[ASYNC-ANALYSIS] Service: {} | AI response received", serviceName);
-            List<AiAlertDocument> alerts = AiResponseParser.parse(analysis);
-            if (alerts == null || alerts.isEmpty()) {
-                log.warn("[ASYNC-WARN] Service: {} | No alerts generated", serviceName);
-                return;
-            }
-            for (AiAlertDocument alert : alerts) {
-               if (alert.getSeverity() == null || alert.getSeverity().isBlank()) {
-                    log.warn("[ASYNC-WARN] Service: {} | Severity empty", serviceName);
-                    alert.setSeverity("UNKNOWN");
-                }
-
-                if (alert.getRootCause() == null || alert.getRootCause().isBlank()) {
-                    alert.setRootCause("Unknown root cause");
-                }
-
-                if (alert.getImpact() == null || alert.getImpact().isBlank()) {
-                    alert.setImpact("Impact not provided");
-                }
-                if (alert.getSuggestedFix() == null || alert.getSuggestedFix().isBlank()) {
-                    alert.setSuggestedFix("No suggested fix provided");
-                }
-                /**
-                 * Override actual service name
-                 */
-                alert.setService(serviceName);
-                alert.setCreatedAt(Instant.now());
-                log.debug("[ASYNC-ALERT] Service: {} | Severity: {} | RootCause: {}", serviceName, alert.getSeverity(), alert.getRootCause());
-                /**
-                 * Save alert
-                 */
-                aiAlertService.save(alert);
-                log.info("[ASYNC-SAVED] Service: {} | Alert saved successfully", serviceName);
-                /**
-                 * Pretty log
-                 */
-                log.error("""
-
-                        =================================
-                        AI SERVICE ALERT GENERATED
-                        =================================
-
-                        Service: {}
-
-                        Error Count: {}
-
-                        Severity: {}
-
-                        Root Cause:
-                        {}
-
-                        Impact:
-                        {}
-
-                        Suggested Fix:
-                        {}
-
-                        =================================
-                        """, serviceName,errorCount, alert.getSeverity(), alert.getRootCause(), alert.getImpact(), alert.getSuggestedFix());
-            }
-            lastAlertTimePerService.put(serviceName, Instant.now());
-        } catch (Exception ex) {
-            log.error("[ASYNC-ERROR] Service: {} | Failed to analyze", serviceName, ex);
+            log.error(
+                    "Analysis failed",
+                    ex
+            );
 
         } finally {
-            processingServices.remove(serviceName);
-            log.info("[ASYNC-END] Service: {} removed from processing", serviceName);
+
+            running.set(false);
         }
     }
 
-
-    private boolean isCooldownValid(String serviceName) {
-        Instant lastAlert = lastAlertTimePerService.get(serviceName);
-        return lastAlert == null || lastAlert.isBefore(Instant.now().minusSeconds(cooldownSeconds));
-    }
-
-    private void logErrorSpike(String serviceName, long errorCount) {
-        log.warn("""
-
-        =================================
-        SERVICE ERROR SPIKE DETECTED
-        =================================
-
-        Service: {}
-        Error Count: {}
-
-        """, serviceName, errorCount);
-    }
     public String analyzeTrace(String traceId) throws IOException {
         List<LogDocument> logs = logService.getLogsByTraceId(traceId);
         StringBuilder builder = new StringBuilder();
