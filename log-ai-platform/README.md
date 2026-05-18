@@ -1,661 +1,719 @@
-# AI Observability Platform
+# AI-Powered Observability & Anomaly Detection Platform
 
 ## Overview
 
-AI Observability Platform is an AI-powered centralized logging and observability system built using:
+This project is a production-style AI-powered observability platform designed to centralize logs, detect anomalies, generate AI-driven root cause analysis (RCA), and provide semantic intelligence on top of distributed microservice ecosystems.
 
-* Spring Boot 3
-* OpenSearch
-* Python FastAPI
-* Isolation Forest ML
-* Ollama
-* Local LLMs
-* Vector Search
-* AI RCA
-* Semantic Search
-* Statistical + ML Anomaly Detection
-* RAG-based Incident Memory
-
-The platform ingests logs from microservices, stores them in OpenSearch, analyzes them using local AI models running via Ollama and Python ML services, and provides:
-
-* AI-powered Root Cause Analysis
-* Statistical anomaly detection
-* ML-based anomaly detection
-* Service-wise alerting
-* Trace correlation
-* Semantic incident search
-* Severity heatmaps
-* Dependency graph generation
-* AI anomaly alerts
-* Incident memory (RAG)
-
----
-
-# High Level Architecture
-
-```text
-+------------------------------------------------+
-|                Microservices                   |
-|------------------------------------------------|
-| payment-service                                |
-| inventory-service                              |
-| gateway-service                                |
-| notification-service                           |
-+------------------------+-----------------------+
-                         |
-                         v
-+------------------------------------------------+
-|            AI Observability Platform           |
-|------------------------------------------------|
-| Spring Boot REST APIs                          |
-| Metrics Aggregation Engine                     |
-| Statistical Anomaly Detection                  |
-| ML Alert Orchestration                         |
-| AI RCA Engine                                  |
-| Semantic Search                                |
-| Dependency Graph Builder                       |
-| Incident Memory (RAG)                          |
-+------------------------+-----------------------+
-                         |
-         +---------------+----------------+
-         |                                |
-         v                                v
-+-------------------+        +----------------------+
-|    OpenSearch     |        |     Python ML        |
-|-------------------|        |----------------------|
-| logs              |        | FastAPI              |
-| service-metrics   |        | Isolation Forest     |
-| service-anomalies |        | ML Predictions       |
-| ai-anomaly-alerts |        +----------------------+
-| ai-alerts         |
-| logs-vector       |        +----------------------+
-| incident-memory   |        |       Ollama         |
-+-------------------+        |----------------------|
-                              | llama3              |
-                              | deepseek-coder      |
-                              | nomic-embed-text    |
-                              +----------------------+
-```
-![img_1.png](img_1.png)
----
-
-# Core Features
-
-## 1. Centralized Logging
-
-Stores logs from all microservices in OpenSearch.
-
-Features:
+The platform combines:
 
 * Real-time log ingestion
-* Structured logging
-* TraceId support
-* Service-wise indexing
-* Timestamp-based querying
+* OpenSearch indexing and querying
+* Kafka-based streaming
+* AI-assisted analysis
+* Statistical + ML anomaly detection
+* Semantic search
+* Incident memory (RAG-ready)
+* Dependency analysis
+* Service health intelligence
+
+The architecture demonstrates:
+
+* Distributed systems design
+* Event-driven architecture
+* AI/ML integration with enterprise systems
+* Observability engineering
+* Scalable microservice orchestration
+* Search and analytics architecture
+* Production-grade indexing strategy
+* Multi-service integration patterns
 
 ---
 
-## 2. Metrics Aggregation Engine
+# Business Problem Solved
 
-Aggregates logs into service-level metrics.
+Modern distributed systems generate massive amounts of logs and operational data.
 
-Generated Metrics:
+Traditional monitoring systems typically:
 
-* error count
-* warn count
-* critical count
-* average response time
-* unique exception count
+* Only detect infrastructure failures
+* Cannot explain WHY failures happened
+* Generate noisy alerts
+* Miss hidden anomaly patterns
+* Lack semantic intelligence
+* Cannot correlate incidents across services
 
-Stored in:
+This platform solves those challenges by introducing:
 
-```text
-service-metrics
+| Problem                     | Solution                          |
+| --------------------------- | --------------------------------- |
+| Huge volume of logs         | Centralized OpenSearch indexing   |
+| Alert fatigue               | ML-based anomaly scoring          |
+| Slow RCA                    | AI-powered root cause analysis    |
+| Unknown dependencies        | Dependency graph analysis         |
+| Repeated incidents          | Incident memory + semantic search |
+| Hidden operational trends   | Statistical + AI analytics        |
+| Distributed trace confusion | Correlation-based analysis        |
+
+---
+
+# Scope of the Platform
+
+The platform supports:
+
+## Core Observability
+
+* Centralized logging
+* Service-wise log ingestion
+* Structured log indexing
+* Error aggregation
+* Metrics generation
+* Heatmaps and severity analytics
+
+## AI & Intelligence Layer
+
+* AI-generated root cause analysis
+* Semantic search using embeddings
+* Similar incident retrieval
+* LLM-based operational insights
+* AI alert summarization
+
+## Anomaly Detection
+
+* Statistical anomaly detection
+* Isolation Forest ML model
+* Service behavior analysis
+* Latency spike detection
+* Error burst detection
+
+## Search & Analytics
+
+* OpenSearch aggregation queries
+* Full text search
+* Vector search support
+* Incident correlation
+* Service dependency analysis
+
+## Streaming & Event Processing
+
+* Kafka-based asynchronous ingestion
+* Decoupled processing architecture
+* Real-time event-driven analysis
+
+---
+
+# High-Level Architecture
+
+```mermaid
+flowchart TB
+
+subgraph CLIENT_LAYER
+    UI1[Operations Dashboard]
+    UI2[Admin APIs]
+    UI3[Monitoring Consumers]
+    UI4[Alerting Systems]
+end
+
+subgraph APPLICATION_LAYER
+    MS1[payment-service]
+    MS2[user-service]
+    MS3[order-service]
+    MS4[inventory-service]
+    MS5[gateway-service]
+    MS6[notification-service]
+end
+
+subgraph STREAMING_LAYER
+    KAFKA[Apache Kafka]
+
+    TOPIC1[logs-topic]
+    TOPIC2[metrics-topic]
+    TOPIC3[alerts-topic]
+
+    KAFKA --> TOPIC1
+    KAFKA --> TOPIC2
+    KAFKA --> TOPIC3
+end
+
+subgraph OBSERVABILITY_LAYER
+    INGEST[log-ai-platform]
+    AIENGINE[ai-analysis-service]
+    ANOMALY[anomaly-detection-service]
+    ML[Python ML Engine]
+    LLM[LLM Layer]
+
+    INGEST --> AIENGINE
+    AIENGINE --> ANOMALY
+    AIENGINE --> ML
+    AIENGINE --> LLM
+    ANOMALY --> ML
+end
+
+subgraph DATA_LAYER
+    OS[OpenSearch Cluster]
+
+    IDX1[logs]
+    IDX2[service-metrics]
+    IDX3[service-anomalies]
+    IDX4[ai-alerts]
+    IDX5[incident-memory]
+    IDX6[vector-index]
+
+    OS --> IDX1
+    OS --> IDX2
+    OS --> IDX3
+    OS --> IDX4
+    OS --> IDX5
+    OS --> IDX6
+end
+
+subgraph AI_LAYER
+    OLLAMA[Ollama]
+    EMBED[Embedding Models]
+    RAG[RAG Memory Engine]
+    SEMANTIC[Semantic Retrieval]
+
+    OLLAMA --> EMBED
+    EMBED --> RAG
+    RAG --> SEMANTIC
+end
+
+APPLICATION_LAYER --> STREAMING_LAYER
+STREAMING_LAYER --> OBSERVABILITY_LAYER
+OBSERVABILITY_LAYER --> DATA_LAYER
+OBSERVABILITY_LAYER --> AI_LAYER
+DATA_LAYER --> CLIENT_LAYER
+AI_LAYER --> CLIENT_LAYER
 ```
 
-Example:
+# Complete System Architecture
 
-```json
-{
-  "service": "payment-service",
-  "errorCount": 120,
-  "warnCount": 40,
-  "criticalCount": 10,
-  "avgResponseTime": 4200,
-  "uniqueExceptionCount": 5
-}
+## Enterprise High-Level Architecture
+
+```mermaid
+flowchart LR
+
+A[Microservices Ecosystem]
+A1[payment-service]
+A2[inventory-service]
+A3[gateway-service]
+A4[notification-service]
+A5[user-service]
+A6[order-service]
+
+A --> A1
+A --> A2
+A --> A3
+A --> A4
+A --> A5
+A --> A6
+
+A1 --> K
+A2 --> K
+A3 --> K
+A4 --> K
+A5 --> K
+A6 --> K
+
+K[Apache Kafka]
+
+K --> L
+
+subgraph OBSERVABILITY_PLATFORM
+
+L[log-ai-platform]
+M[ai-analysis-service]
+N[anomaly-detection-service]
+P[Python ML FastAPI]
+Q[Ollama LLM Engine]
+
+L --> M
+M --> N
+M --> P
+M --> Q
+N --> Q
+
+end
+
+subgraph STORAGE_LAYER
+
+OS[(OpenSearch)]
+IDX1[(logs)]
+IDX2[(service-metrics)]
+IDX3[(service-anomalies)]
+IDX4[(ai-alerts)]
+IDX5[(logs-vector)]
+IDX6[(incident-memory)]
+
+OS --> IDX1
+OS --> IDX2
+OS --> IDX3
+OS --> IDX4
+OS --> IDX5
+OS --> IDX6
+
+end
+
+L --> OS
+M --> OS
+N --> OS
+P --> OS
+
+Q --> M
+Q --> N
+
+UI[Dashboard / APIs / Consumers]
+
+OS --> UI
+M --> UI
+N --> UI
 ```
 
 ---
 
-## 3. Statistical Anomaly Detection
+# Low-Level Design Architecture
 
-Detects anomalies using moving averages and deviation analysis.
+## Internal Processing Pipeline
 
-Rule:
+```mermaid
+sequenceDiagram
+    participant Service as Microservice
+    participant Kafka as Kafka Topic
+    participant Platform as log-ai-platform
+    participant OpenSearch as OpenSearch
+    participant AI as ai-analysis-service
+    participant ML as Python ML Service
+    participant RCA as Ollama LLM
 
-```text
-currentErrors > averageErrors * 3
+    Service->>Kafka: Publish structured logs
+    Kafka->>Platform: Consume log events
+
+    Platform->>OpenSearch: Store logs index
+    Platform->>OpenSearch: Store metrics index
+
+    AI->>OpenSearch: Read recent logs
+    AI->>OpenSearch: Aggregate metrics
+
+    AI->>ML: Send metrics for anomaly detection
+    ML-->>AI: Return anomaly score
+
+    AI->>RCA: Send contextual incident prompt
+    RCA-->>AI: Generate RCA summary
+
+    AI->>OpenSearch: Store AI alerts
+    AI->>OpenSearch: Store incident memory
 ```
-
-Example:
-
-```text
-normal: 5 errors/min
-current: 120 errors/min
-=> anomaly detected
-```
-
-Stored in:
-
-```text
-service-anomalies
-```
-
----
-
-## 4. ML-based Anomaly Detection
-
-Uses Python FastAPI + Isolation Forest ML model.
-
-ML Service analyzes:
-
-* error spikes
-* response time spikes
-* critical failures
-* exception bursts
-* abnormal behavior patterns
-
-Example:
-
-```json
-{
-  "anomaly": true,
-  "score": -0.82,
-  "reasons": [
-    "High error count",
-    "High response time"
-  ]
-}
-```
-
----
-
-## 5. AI Anomaly Alerting
-
-Combines:
-
-* statistical anomaly detection
-* ML anomaly detection
-
-to generate final AI alerts.
-
-Stored in:
-
-```text
-ai-anomaly-alerts
-```
-
-Example:
-
-```json
-{
-  "service": "payment-service",
-  "severity": "CRITICAL",
-  "mlAnomaly": true,
-  "statisticalAnomaly": true,
-  "mlScore": -0.82,
-  "statisticalScore": 8.5,
-  "reasons": [
-    "High error count",
-    "High response time"
-  ]
-}
-```
-
----
-
-## 6. AI Root Cause Analysis (RCA)
-
-Uses Ollama-hosted local LLMs to analyze incidents.
-
-AI identifies:
-
-* Root cause
-* Severity
-* Suggested fix
-* Impact
-* Affected services
-* Immediate action requirements
-
----
-
-## 7. TraceId Correlation
-
-Analyzes distributed transactions across services.
-
-Example:
-
-```text
-gateway-service
-   -> payment-service
-      -> inventory-service
-```
-
-AI reconstructs:
-
-* failure sequence
-* cascading failures
-* root service
-
----
-
-## 8. Exception Clustering
-
-Groups similar stack traces into a single incident cluster.
-
-Example:
-
-```text
-500 NullPointerExceptions
-=> ONE cluster
-```
-
----
-
-## 9. AI Severity Heatmap
-
-Tracks incident severity across services.
-
-Example:
-
-```text
-payment-service -> CRITICAL -> 12
-inventory-service -> HIGH -> 5
-```
-
----
-
-## 10. Service Dependency Graph
-
-Builds service topology dynamically using TraceIds.
-
----
-
-## 11. Vector Semantic Search
-
-Supports meaning-based log search.
-
-Example:
-
-Search:
-
-```text
-database issue
-```
-
-Finds:
-
-* connection timeout
-* hikari pool exhausted
-* JDBC connection refused
-
-without exact keyword matching.
-
----
-
-## 12. AI Incident Memory (RAG)
-
-Stores historical incidents and resolutions.
-
-AI retrieves previous similar incidents while analyzing new failures.
 
 ---
 
 # Technology Stack
 
-| Layer           | Technology              |
-| --------------- | ----------------------- |
-| Backend         | Spring Boot 3           |
-| Search Engine   | OpenSearch              |
-| ML Service      | Python FastAPI          |
-| ML Model        | Isolation Forest        |
-| AI Runtime      | Ollama                  |
-| LLM Models      | llama3 / deepseek-coder |
-| Embedding Model | nomic-embed-text        |
-| Vector Database | OpenSearch KNN          |
-| Build Tool      | Maven                   |
-| Language        | Java 17 + Python        |
-| Future UI       | ReactJS                 |
+## Backend Technologies
+
+| Technology       | Purpose                     |
+| ---------------- | --------------------------- |
+| Java 17 / 21     | Backend services            |
+| Spring Boot 3    | REST APIs & orchestration   |
+| Spring WebFlux   | Reactive non-blocking APIs  |
+| Spring Kafka     | Kafka integration           |
+| FastAPI          | Python ML inference APIs    |
+| OpenSearch       | Search and analytics engine |
+| Ollama           | Local LLM execution         |
+| Isolation Forest | ML anomaly detection        |
+| Maven            | Build management            |
+| Docker           | Containerization            |
+| Kafka            | Event streaming             |
 
 ---
 
-# OpenSearch Indexes
-
-## logs
-
-Stores raw application logs.
-
-Fields:
-
-* service
-* level
-* message
-* stacktrace
-* timestamp
-* traceId
-
----
-
-## service-metrics
-
-Stores aggregated metrics.
-
-Fields:
-
-* service
-* errorCount
-* warnCount
-* criticalCount
-* avgResponseTime
-* uniqueExceptionCount
-* timestamp
-
----
-
-## service-anomalies
-
-Stores statistical anomaly results.
-
-Fields:
-
-* service
-* averageErrors
-* currentErrors
-* anomalyScore
-* anomaly
-* timestamp
-
----
-
-## ai-anomaly-alerts
-
-Stores final AI anomaly alerts.
-
-Fields:
-
-* service
-* severity
-* statisticalAnomaly
-* mlAnomaly
-* statisticalScore
-* mlScore
-* reasons
-* timestamp
-
----
-
-## ai-alerts
-
-Stores AI-generated RCA alerts.
-
----
-
-## logs-vector
-
-Stores vector embeddings for semantic search.
-
----
-
-## incident-memory
-
-Stores historical incidents and resolutions.
-
----
-
-# Python ML Service
-
-## Project Structure
+# Repository Structure
 
 ```text
-ai-anomaly-service
- ├── app.py
- ├── requirements.txt
- ├── model
- │     └── isolation_model.pkl
- └── services
-       └── anomaly_service.py
+AI-PLATFORM-main/
+│
+├── log-ai-platform/
+│   ├── Main observability platform
+│   ├── Kafka ingestion
+│   ├── OpenSearch indexing
+│   ├── Metrics APIs
+│   └── Core observability engine
+│
+├── ai-analysis-service/
+│   ├── AI analysis layer
+│   ├── RCA generation
+│   ├── Semantic analysis
+│   ├── Alert intelligence
+│   └── AI orchestration
+│
+├── anomaly-detection-service/
+│   ├── Statistical anomaly detection
+│   ├── Aggregation analysis
+│   └── OpenSearch analytics
+│
+└── ai-anomaly-service/
+    ├── Python FastAPI ML service
+    ├── Isolation Forest model
+    ├── ML predictions
+    └── Training APIs
 ```
 
 ---
 
-## Python Dependencies
+# Services Explanation
 
-```text
-fastapi
-uvicorn
-scikit-learn
-pandas
-numpy
-joblib
+# 1. log-ai-platform
+
+## Responsibilities
+
+* Kafka log ingestion
+* OpenSearch indexing
+* Metrics generation
+* Centralized logging
+* Service analytics
+* Trace storage
+
+## Tech Used
+
+* Spring Boot 3.3.4
+* Java 17
+* Spring Kafka
+* OpenSearch Java Client
+* WebFlux
+
+## Run the Service
+
+```bash
+cd log-ai-platform
 ```
 
-Install:
+## Build
+
+```bash
+mvn clean install
+```
+
+## Run
+
+```bash
+mvn spring-boot:run
+```
+
+OR
+
+```bash
+java -jar target/log-ai-platform-0.0.1-SNAPSHOT.jar
+```
+
+---
+
+# 2. ai-analysis-service
+
+## Responsibilities
+
+* AI-based RCA
+* AI summarization
+* Semantic analysis
+* Alert intelligence
+* LLM orchestration
+* AI correlation
+
+## Tech Used
+
+* Spring Boot 3.3.4
+* Java 21
+* WebFlux
+* Kafka
+* OpenSearch
+* Ollama APIs
+
+## Run the Service
+
+```bash
+cd ai-analysis-service
+mvn clean install
+mvn spring-boot:run
+```
+
+---
+
+# 3. anomaly-detection-service
+
+## Responsibilities
+
+* Statistical anomaly detection
+* Error spike analysis
+* Trend analytics
+* Aggregated metrics processing
+
+## Tech Used
+
+* Spring Boot 3.5.x
+* Java 21
+* OpenSearch Aggregations
+* Jackson
+
+## Run the Service
+
+```bash
+cd anomaly-detection-service
+mvn clean install
+mvn spring-boot:run
+```
+
+---
+
+# 4. ai-anomaly-service
+
+## Responsibilities
+
+* ML-based anomaly detection
+* Isolation Forest model
+* Prediction APIs
+* Training APIs
+
+## Tech Used
+
+* Python
+* FastAPI
+* Scikit-learn
+* Pandas
+* NumPy
+
+## Install Dependencies
+
+```bash
+cd ai-anomaly-service
+```
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
-## Start Python ML Service
+## Run the Service
 
 ```bash
 uvicorn app:app --reload --port 8000
 ```
 
-Swagger UI:
+## Verify Health
 
-```text
-http://localhost:8000/docs
+```bash
+GET http://localhost:8000/health
 ```
 
 ---
 
-## ML APIs
+# OpenSearch Setup
 
-### Health Check
+# Run OpenSearch Using Docker
 
-```http
-GET /health
+## Create Docker Network
+
+```bash
+docker network create ai-platform-network
 ```
 
----
+## Start OpenSearch
 
-### Train ML Model
-
-```http
-POST /train
+```bash
+docker run -d \
+  --name opensearch \
+  --network ai-platform-network \
+  -p 9200:9200 \
+  -p 9600:9600 \
+  -e discovery.type=single-node \
+  -e plugins.security.disabled=true \
+  -e OPENSEARCH_INITIAL_ADMIN_PASSWORD=admin \
+  opensearchproject/opensearch:latest
 ```
 
----
+## Verify OpenSearch
 
-### Predict Anomaly
-
-```http
-POST /predict
+```bash
+curl http://localhost:9200
 ```
 
-Request:
+Expected response:
 
 ```json
 {
-  "error_count": 120,
-  "warn_count": 30,
-  "critical_count": 15,
-  "avg_response_time": 4500,
-  "unique_exception_count": 10
-}
-```
-
-Response:
-
-```json
-{
-  "anomaly": true,
-  "score": -0.82,
-  "reasons": [
-    "High error count",
-    "High response time"
-  ]
+  "name" : "opensearch",
+  "cluster_name" : "docker-cluster"
 }
 ```
 
 ---
 
-# Package Structure
+# OpenSearch Index Strategy
 
-```text
-com.ai.anomaly.anomalydetectionservice
-│
-├── client
-│   └── MLAnomalyClient
-│
-├── config
-│   ├── OpenSearchConfig
-│   └── MLWebClientConfig
-│
-├── controller
-│   ├── LogController
-│   ├── AIAlertController
-│   └── MetricsController
-│
-├── dto
-│   ├── AggregatedMetrics
-│   ├── ServiceMetric
-│   ├── ServiceAnomaly
-│   ├── AIAnomalyAlert
-│   ├── MLRequest
-│   ├── MLResponse
-│   └── AIAlertResponseDTO
-│
-├── repository
-│   ├── ServiceMetricRepository
-│   ├── ServiceAnomalyRepository
-│   └── AIAnomalyAlertRepository
-│
-├── service
-│   ├── LogAggregationService
-│   ├── MetricsScheduler
-│   ├── StatisticalAnomalyService
-│   ├── AIAlertService
-│   └── AIAlertMapper
-│
-└── util
-```
+## Core Indexes
+
+| Index Name        | Purpose              |
+| ----------------- | -------------------- |
+| logs              | Raw centralized logs |
+| service-metrics   | Aggregated metrics   |
+| service-anomalies | Anomaly results      |
+| ai-alerts         | AI-generated alerts  |
+| ai-anomaly-alerts | ML anomaly alerts    |
+| logs-vector       | Embedding vectors    |
+| incident-memory   | Historical incidents |
 
 ---
 
-# Metrics Aggregation Flow
+# Create OpenSearch Indexes
 
-```text
-logs
-   ↓
-Metrics Aggregation Engine
-   ↓
-service-metrics
-   ↓
-Statistical Detection
-   ↓
-Python ML Prediction
-   ↓
-AI Alert Generation
-   ↓
-ai-anomaly-alerts
-```
+## logs Index
 
----
-
-# Core REST APIs
-
-## Insert Logs
-
-```http
-POST /api/logs
-```
-
----
-
-## Fetch AI Alerts
-
-```http
-GET /api/alerts
-```
-
----
-
-## Semantic Search
-
-```http
-GET /api/search/semantic?query=database issue
-```
-
----
-
-## Anomaly Detection
-
-```http
-GET /api/anomalies
-```
-
----
-
-# AI Alert API Example
-
-## Response
-
-```json
-[
-  {
-    "service": "payment-service",
-    "severity": "CRITICAL",
-    "status": "OPEN",
-    "confidence": 96.0,
-    "mlScore": -0.82,
-    "statisticalScore": 8.5,
-    "detectedAt": "Just now",
-    "rootCause": "High error count",
-    "errorCount": 120,
-    "avgResponseTime": 4500,
-    "reasons": [
-      "High error count",
-      "High response time"
-    ]
+```bash
+PUT logs
+{
+  "mappings": {
+    "properties": {
+      "serviceName": { "type": "keyword" },
+      "level": { "type": "keyword" },
+      "message": { "type": "text" },
+      "traceId": { "type": "keyword" },
+      "timestamp": { "type": "date" }
+    }
   }
-]
+}
 ```
 
 ---
 
-# How To Start The Platform
+## service-metrics Index
 
-## Step 1 — Start OpenSearch
-
-```text
-http://localhost:9200
+```bash
+PUT service-metrics
+{
+  "mappings": {
+    "properties": {
+      "serviceName": { "type": "keyword" },
+      "errorCount": { "type": "integer" },
+      "warnCount": { "type": "integer" },
+      "criticalCount": { "type": "integer" },
+      "avgResponseTime": { "type": "float" },
+      "timestamp": { "type": "date" }
+    }
+  }
+}
 ```
 
 ---
 
-## Step 2 — Start OpenSearch Dashboards
+## service-anomalies Index
 
-```text
-http://localhost:5601
+```bash
+PUT service-anomalies
+{
+  "mappings": {
+    "properties": {
+      "serviceName": { "type": "keyword" },
+      "anomalyScore": { "type": "float" },
+      "isAnomaly": { "type": "boolean" },
+      "reason": { "type": "text" },
+      "timestamp": { "type": "date" }
+    }
+  }
+}
 ```
 
 ---
 
-## Step 3 — Start Ollama
+# Kafka Setup
+
+# Run Kafka Using Docker Compose
+
+Create:
+
+```yaml
+version: '3'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+```
+
+## Start Kafka
+
+```bash
+docker-compose up -d
+```
+
+---
+
+# Create Kafka Topics
+
+## Create Log Topic
+
+```bash
+docker exec -it kafka kafka-topics \
+--create \
+--topic logs-topic \
+--bootstrap-server localhost:9092 \
+--partitions 3 \
+--replication-factor 1
+```
+
+## Create Metrics Topic
+
+```bash
+docker exec -it kafka kafka-topics \
+--create \
+--topic metrics-topic \
+--bootstrap-server localhost:9092 \
+--partitions 3 \
+--replication-factor 1
+```
+
+## Verify Topics
+
+```bash
+docker exec -it kafka kafka-topics \
+--list \
+--bootstrap-server localhost:9092
+```
+
+---
+
+# Ollama Setup
+
+## Install Ollama
+
+Official Website:
+
+[https://ollama.com](https://ollama.com)
+
+## Pull Models
+
+```bash
+ollama pull llama3
+```
+
+```bash
+ollama pull nomic-embed-text
+```
+
+```bash
+ollama pull deepseek-coder
+```
+
+## Verify Models
 
 ```bash
 ollama list
@@ -663,67 +721,251 @@ ollama list
 
 ---
 
-## Step 4 — Start Python ML Service
+# OpenRouter Configuration
 
-```bash
-uvicorn app:app --reload --port 8000
+If you are using OpenRouter for LLM access, configure the model correctly in your application properties.
+
+## application.properties
+
+```properties
+openrouter.api.model=nvidia/nemotron-3-super-120b-a12b:free
+```
+
+## application.yml
+
+```yaml
+openrouter:
+  api:
+    model: nvidia/nemotron-3-super-120b-a12b:free
 ```
 
 ---
 
-## Step 5 — Start Spring Boot Application
+# Running the Entire Platform
 
-```bash
-mvn spring-boot:run
-```
+## Recommended Startup Order
 
-Application:
+1. OpenSearch
+2. Kafka
+3. Ollama
+4. Python ML Service
+5. log-ai-platform
+6. ai-analysis-service
+7. anomaly-detection-service
+
+---
+
+# Example End-to-End Flow
 
 ```text
-http://localhost:8080
+Microservice Logs
+        ↓
+Kafka Topic
+        ↓
+log-ai-platform
+        ↓
+OpenSearch
+        ↓
+ai-analysis-service
+        ↓
+Python ML Service
+        ↓
+Ollama LLM
+        ↓
+AI Alerts + RCA + Anomaly Detection
 ```
 
 ---
 
-# Future Enhancements
+# AI Features
 
-## Planned Features
+## AI Root Cause Analysis
 
-* ReactJS Dashboard
-* Live anomaly streaming
-* WebSocket alerts
-* Prophet forecasting
-* Isolation Forest retraining
-* AI remediation engine
-* Kubernetes monitoring
-* Slack integration
-* Auto incident timeline
-* LLM-generated summaries
-* Distributed tracing visualization
+The AI engine:
+
+* Reads recent logs
+* Correlates exceptions
+* Identifies dependency failures
+* Summarizes probable root cause
+* Generates operational explanations
 
 ---
 
-# Summary
+## Semantic Search
 
-This project demonstrates a complete AI-native observability platform capable of:
+The platform supports semantic retrieval using embeddings.
 
-* centralized logging
-* statistical anomaly detection
+Example:
+
+```text
+"Find incidents similar to Redis timeout failures"
+```
+
+The vector search engine retrieves semantically related incidents instead of keyword-only matches.
+
+---
+
+## Incident Memory (RAG)
+
+The platform stores:
+
+* Historical incidents
+* RCA summaries
+* Alert explanations
+* Operational patterns
+
+This enables:
+
+* Similar incident recommendations
+* Historical RCA reuse
+* Faster production debugging
+
+---
+
+# Scalability Considerations
+
+## Designed for Horizontal Scaling
+
+| Component            | Scaling Strategy             |
+| -------------------- | ---------------------------- |
+| Kafka                | Partition scaling            |
+| OpenSearch           | Shard scaling                |
+| Spring Boot Services | Kubernetes replicas          |
+| Python ML            | Stateless scaling            |
+| Ollama               | GPU-backed inference scaling |
+
+---
+
+# Production Enhancements (Future Scope)
+
+## Future Improvements
+
+* Kubernetes deployment
+* Grafana dashboards
+* Prometheus integration
+* OpenTelemetry tracing
+* Distributed tracing visualization
+* Real-time alerting
+* Slack integration
+* Jira auto-ticketing
+* AI copilot for operations
+* Auto-remediation workflows
+* Multi-tenant observability
+* GPU inference acceleration
+
+---
+
+# Sample Operational Use Cases
+
+## Example 1: Redis Failure Spike
+
+The system:
+
+* Detects Redis timeout spike
+* Correlates multiple services
+* Generates anomaly alert
+* Produces AI RCA summary
+* Stores incident memory
+
+---
+
+## Example 2: Latency Degradation
+
+The system:
+
+* Detects abnormal response time increase
+* Identifies affected services
+* Generates dependency graph impact
+* Produces AI recommendations
+
+---
+
+# Engineering Highlights
+
+This project demonstrates:
+
+* Event-driven architecture
+* Distributed systems thinking
+* Enterprise observability design
+* AI + backend integration
+* Search infrastructure design
+* ML inference integration
+* Scalable analytics architecture
+* Production-ready indexing strategy
+* Service orchestration patterns
+* Real-time streaming systems
+
+---
+
+# Recommended Environment
+
+| Component  | Version |
+| ---------- | ------- |
+| Java       | 17 / 21 |
+| Python     | 3.11+   |
+| Maven      | 3.9+    |
+| Docker     | Latest  |
+| OpenSearch | 2.x     |
+| Kafka      | Latest  |
+| Ollama     | Latest  |
+
+---
+
+# API Examples
+
+## Train ML Model
+
+```http
+POST /train
+```
+
+Payload:
+
+```json
+[
+  {
+    "error_count": 10,
+    "warn_count": 5,
+    "critical_count": 1,
+    "avg_response_time": 120.5,
+    "unique_exception_count": 2
+  }
+]
+```
+
+---
+
+## Predict Anomaly
+
+```http
+POST /predict
+```
+
+Payload:
+
+```json
+{
+  "error_count": 50,
+  "warn_count": 10,
+  "critical_count": 5,
+  "avg_response_time": 2000,
+  "unique_exception_count": 15
+}
+```
+
+---
+
+# Final Summary
+
+This project is a complete AI-powered observability ecosystem that combines:
+
+* Distributed systems
+* AI engineering
+* Search infrastructure
 * ML anomaly detection
-* AI-powered RCA
-* semantic incident search
-* distributed trace analysis
-* service dependency discovery
-* RAG-based incident intelligence
-* AI anomaly alerting
+* Event streaming
+* Semantic intelligence
+* Operational analytics
 
-The platform runs completely locally using:
 
-* Spring Boot
-* OpenSearch
-* Python FastAPI
-* Isolation Forest
-* Ollama
-* Local LLMs
-
-without requiring external cloud AI providers.
+It is designed to showcase strong backend engineering, platform engineering, observability architecture, AI integration, and scalable enterprise system design skills.
