@@ -624,6 +624,265 @@ PUT service-anomalies
 
 ---
 
+# Starting the Python ML Server
+
+The `ai-anomaly-service` is a FastAPI-based machine learning service responsible for:
+
+- ML anomaly detection
+- Isolation Forest predictions
+- Model training
+- AI metric scoring
+
+---
+
+# Prerequisites
+
+Make sure the following are installed:
+
+| Software | Recommended Version |
+|---|---|
+| Python | 3.11+ |
+| pip | Latest |
+| virtualenv | Latest |
+
+Verify installation:
+
+```bash
+python --version
+pip --version
+```
+
+---
+
+# Navigate to the Python Service
+
+```bash
+cd ai-anomaly-service
+```
+
+---
+
+# Create Virtual Environment
+
+## Windows
+
+```bash
+python -m venv venv
+```
+
+Activate:
+
+```bash
+venv\\Scripts\\activate
+```
+
+---
+
+## Linux / Mac
+
+```bash
+python3 -m venv venv
+```
+
+Activate:
+
+```bash
+source venv/bin/activate
+```
+
+---
+
+# Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Typical dependencies include:
+
+- fastapi
+- uvicorn
+- scikit-learn
+- pandas
+- numpy
+- joblib
+
+---
+
+# Start the FastAPI Server
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Explanation:
+
+| Parameter | Meaning |
+|---|---|
+| app | Python file name (`app.py`) |
+| app | FastAPI object inside file |
+| --reload | Auto reload on code changes |
+| --port 8000 | Runs on port 8000 |
+
+---
+
+# Verify Server
+
+Open browser:
+
+```text
+http://localhost:8000/docs
+```
+
+FastAPI Swagger UI should appear.
+
+---
+
+# Health Check API
+
+```http
+GET /health
+```
+
+Example:
+
+```bash
+curl http://localhost:8000/health
+```
+
+Expected Response:
+
+```json
+{
+  "status": "UP"
+}
+```
+
+---
+
+# Train ML Model
+
+```http
+POST /train
+```
+
+Sample Payload:
+
+```json
+[
+  {
+    "error_count": 10,
+    "warn_count": 5,
+    "critical_count": 1,
+    "avg_response_time": 120.5,
+    "unique_exception_count": 2
+  }
+]
+```
+
+---
+
+# Predict Anomaly
+
+```http
+POST /predict
+```
+
+Sample Payload:
+
+```json
+{
+  "error_count": 50,
+  "warn_count": 10,
+  "critical_count": 5,
+  "avg_response_time": 2000,
+  "unique_exception_count": 15
+}
+```
+
+Expected Response:
+
+```json
+{
+  "is_anomaly": true,
+  "score": -0.84
+}
+```
+
+---
+
+# Common Errors
+
+## Module Not Found
+
+Install missing dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Port Already In Use
+
+Run on different port:
+
+```bash
+uvicorn app:app --port 8001 --reload
+```
+
+---
+
+## Uvicorn Not Found
+
+Install manually:
+
+```bash
+pip install uvicorn
+```
+
+---
+
+# Production Deployment
+
+Recommended production server:
+
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+OR using Gunicorn:
+
+```bash
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app
+```
+
+---
+
+# Docker Run Example
+
+```bash
+docker build -t ai-anomaly-service .
+```
+
+```bash
+docker run -p 8000:8000 ai-anomaly-service
+```
+
+---
+
+# Architecture Role
+
+The Python ML service acts as the machine learning inference engine for the platform.
+
+Responsibilities include:
+
+- Statistical anomaly scoring
+- Isolation Forest prediction
+- ML feature evaluation
+- AI-assisted operational analytics
+- Real-time anomaly classification
+
 # Kafka Setup
 
 # Run Kafka Using Docker Compose
