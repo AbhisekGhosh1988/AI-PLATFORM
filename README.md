@@ -167,12 +167,12 @@ subgraph DATA_LAYER
 end
 
 subgraph AI_LAYER
-    OLLAMA[Ollama]
+    Nvidia[nemotron-3-super-120b-a12b]
     EMBED[Embedding Models]
     RAG[RAG Memory Engine]
     SEMANTIC[Semantic Retrieval]
 
-    OLLAMA --> EMBED
+    Nvidia --> EMBED
     EMBED --> RAG
     RAG --> SEMANTIC
 end
@@ -224,7 +224,7 @@ L[log-ai-platform]
 M[ai-analysis-service]
 N[anomaly-detection-service]
 P[Python ML FastAPI]
-Q[Ollama LLM Engine]
+Q[nemotron-3-super-120b-a12b LLM Engine]
 
 L --> M
 M --> N
@@ -282,7 +282,7 @@ sequenceDiagram
     participant OpenSearch as OpenSearch
     participant AI as ai-analysis-service
     participant ML as Python ML Service
-    participant RCA as Ollama LLM
+    participant RCA as nemotron-3-super-120b-a12b LLM
 
     Service->>Kafka: Publish structured logs
     Kafka->>Platform: Consume log events
@@ -310,20 +310,25 @@ sequenceDiagram
 ## Backend Technologies
 
 | Technology       | Purpose                     |
-| ---------------- | --------------------------- |
+|------------------| --------------------------- |
 | Java 17 / 21     | Backend services            |
 | Spring Boot 3    | REST APIs & orchestration   |
 | Spring WebFlux   | Reactive non-blocking APIs  |
 | Spring Kafka     | Kafka integration           |
 | FastAPI          | Python ML inference APIs    |
 | OpenSearch       | Search and analytics engine |
-| Ollama           | Local LLM execution         |
+| Nvidia           | Local LLM execution         |
 | Isolation Forest | ML anomaly detection        |
 | Maven            | Build management            |
 | Docker           | Containerization            |
 | Kafka            | Event streaming             |
 
 ---
+
+---
+# Schematic Diagram
+
+![img_1.png](img_1.png)
 
 # Repository Structure
 
@@ -423,7 +428,7 @@ java -jar target/log-ai-platform-0.0.1-SNAPSHOT.jar
 * WebFlux
 * Kafka
 * OpenSearch
-* Ollama APIs
+* Nvidia nemotron-3-super-120b-a12b APIs
 
 ## Run the Service
 
@@ -690,33 +695,6 @@ docker exec -it kafka kafka-topics \
 ```
 
 ---
-
-# Ollama Setup
-
-## Install Ollama
-
-Official Website:
-
-[https://ollama.com](https://ollama.com)
-
-## Pull Models
-
-```bash
-ollama pull llama3
-```
-
-```bash
-ollama pull nomic-embed-text
-```
-
-```bash
-ollama pull deepseek-coder
-```
-
-## Verify Models
-
-```bash
-ollama list
 ```
 
 ---
@@ -747,7 +725,7 @@ openrouter:
 
 1. OpenSearch
 2. Kafka
-3. Ollama
+3. Nvidia nemotron-3-super-120b-a12b
 4. Python ML Service
 5. log-ai-platform
 6. ai-analysis-service
@@ -770,7 +748,7 @@ ai-analysis-service
         ↓
 Python ML Service
         ↓
-Ollama LLM
+nemotron-3-super-120b-a12b LLM
         ↓
 AI Alerts + RCA + Anomaly Detection
 ```
@@ -827,12 +805,12 @@ This enables:
 ## Designed for Horizontal Scaling
 
 | Component            | Scaling Strategy             |
-| -------------------- | ---------------------------- |
+|----------------------| ---------------------------- |
 | Kafka                | Partition scaling            |
 | OpenSearch           | Shard scaling                |
 | Spring Boot Services | Kubernetes replicas          |
 | Python ML            | Stateless scaling            |
-| Ollama               | GPU-backed inference scaling |
+| Nvidia               | GPU-backed inference scaling |
 
 ---
 
@@ -900,14 +878,14 @@ This project demonstrates:
 # Recommended Environment
 
 | Component  | Version |
-| ---------- | ------- |
+|------------| ------- |
 | Java       | 17 / 21 |
 | Python     | 3.11+   |
 | Maven      | 3.9+    |
 | Docker     | Latest  |
 | OpenSearch | 2.x     |
 | Kafka      | Latest  |
-| Ollama     | Latest  |
+| Nvidia     | Latest  |
 
 ---
 
